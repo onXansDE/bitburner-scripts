@@ -1,7 +1,11 @@
 import { NS } from "@ns";
+import { DisplayPreset, TextFormater } from "/lib/formating";
 
 export async function main(ns: NS): Promise<void> {
-    ns.disableLog("sleep");
+    ns.disableLog("ALL");
+    ns.clearLog();
+
+    const tf = new TextFormater(ns);
 
     const servername = String(ns.args[0]);
 
@@ -10,33 +14,22 @@ export async function main(ns: NS): Promise<void> {
         return;
     }
 
-    
-
     let server = ns.getServer(servername);
     if (server.purchasedByPlayer) {
         ns.tprint(`Server ${servername} cant be tracked because it is owned by the player`);
         return;
     }
     
-    const serverBaseSecurity = server.baseDifficulty;
-    const serverMinSecurity = server.minDifficulty;
-
-    const serverMaxMoney = server.moneyMax;
-    
     ns.tail()
+
+    const moneyHistory = [server.moneyAvailable ?? 0];
 
     while (true) {
         server = ns.getServer(servername);
-        const currentSecurity = server.hackDifficulty;
-        const currentMoney = server.moneyAvailable ?? 0;
-        const currentGrowth = server.serverGrowth;
-        const ip = server.ip
-        const ownedby = server.organizationName
-
-        ns.print(`Server: ${servername} (${ip}, ${ownedby})`);
-        ns.print(`Security: ${currentSecurity} (Base: ${serverBaseSecurity}, Min: ${serverMinSecurity})`);
-        ns.print(`Money: ${formatMoney(Math.floor(currentMoney ?? 0))} (Max: ${formatMoney(serverMaxMoney ?? 0)})`);
-        ns.print(`Growth: ${currentGrowth}`);
+        moneyHistory.push(server.moneyAvailable ?? 0);
+        ns.print(`Server: ${servername} (${server.ip}, ${server.organizationName})`);
+        ns.print(`Security: ${tf.getFormatedInfo(server, DisplayPreset.DIFFICULTY_PERCENT)}`);
+        ns.print(`Money: ${tf.getFormatedInfo(server, DisplayPreset.MONEY_FULL_PERCENT)} ${tf.getTrendFormated(moneyHistory)}`);
         ns.print(``);
         await ns.sleep(1000);
         ns.clearLog();

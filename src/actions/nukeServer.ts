@@ -1,5 +1,5 @@
 import { NS } from "@ns";
-import { ServerHandler } from "../lib/utils";
+import { ServerHandler } from "/lib/server";
 
 export async function main(ns: NS): Promise<void> {
     ns.disableLog("ALL");

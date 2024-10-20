@@ -1,12 +1,12 @@
 import { NS } from "@ns";
-import { XanApi } from "../lib/utils";
+import { FileHandler } from "/lib/files";
 
 export async function main(ns: NS): Promise<void> {
     ns.disableLog("ALL");
     ns.clearLog();
     const scriptName = ns.getScriptName();
     let servername = ns.getHostname();
-    const api = new XanApi(ns);
+    const files = new FileHandler(ns);
     
     const scriptNames = ["clearAllServers", "pushToAll", "execOnAll"];
 
@@ -35,9 +35,9 @@ export async function main(ns: NS): Promise<void> {
     }
 
     ns.tprint(`INFO Clearing all servers`);
-    await api.files.watchScript(servername, scriptNames[0], 1)
+    await files.watchScript(servername, scriptNames[0], 1)
     ns.tprint(`INFO Installing ${targetScriptName} on all servers`);
-    await api.files.watchScript(servername, scriptNames[1], 1, targetScriptName)
+    await files.watchScript(servername, scriptNames[1], 1, targetScriptName)
     ns.tprint(`INFO Running ${targetScriptName} on all servers`);
-    await api.files.watchScript(servername, scriptNames[2], 1, targetScriptName, ...targetScriptArgs)
+    await files.watchScript(servername, scriptNames[2], 1, targetScriptName, ...targetScriptArgs)
 }
