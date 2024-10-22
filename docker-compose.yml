@@ -1,0 +1,13 @@
+version: '3'
+services:
+  bitburner-filesync:
+    build: .
+    container_name: bitburner-filesync
+    command: ["npm", "run", "watch"]
+    ports:
+      - "12525:12525"
+    volumes:
+      - ./src:/app/src
+      - ./NetscriptDefinitions.d.ts:/app/NetscriptDefinitions.d.ts
+    stdin_open: true
+    tty: true
