@@ -41,6 +41,10 @@ export class TextFormater {
         return string;
     }
 
+    public printOptimalThreadUsage(amounts: [number, number, number]): string {
+       return `Optimal thread usage: Growth: ${amounts[0]} | Hack: ${amounts[1]} | Weaken: ${amounts[2]}`;
+    }
+
     getDefaultDisplay(): DisplayPreset[] {
         return [
             DisplayPreset.MONEY_FULL_PERCENT,

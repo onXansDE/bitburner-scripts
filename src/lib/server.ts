@@ -28,7 +28,10 @@ export class ServerHandler {
         return servers.map(server => this.ns.getServer(server));
     }
 
-    public findServers(match: string): string[] {
+    public findServers(match: string | string[]): string[] {
+        if (Array.isArray(match)) {
+            return match.flatMap(m => this.findServers(m));
+        }
         switch (match) {
             case "root":
                 return this.getRootServers();
@@ -36,6 +39,8 @@ export class ServerHandler {
                 return this.getAllServers();
             case "botnet":
                 return this.getBotnetServers();
+            case "home":
+                return ["home"];
             default:
                 return this.findServersByName(match);
         }

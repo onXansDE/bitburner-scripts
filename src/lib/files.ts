@@ -11,7 +11,7 @@ export class FileHandler {
         return this.ns.getScriptRam(script, "home");
     }
 
-    public pushToServer(server: Server | string, scripts: string[]): boolean {
+    public pushToServer(server: Server | string, scripts: string[] | string): boolean {
         const serverName = typeof server === "string" ? server : server.hostname;
         return this.ns.scp(scripts, serverName);
     }

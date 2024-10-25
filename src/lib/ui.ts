@@ -11,11 +11,22 @@ export class UIHandler {
     private lineHeight = 8;
 
     public getTextWidth(text: string): number {
-        const longestLineLength = text.split("\n").reduce((max, line) => Math.max(max, line.length), 0);
+        const longestLineLength = this.getLongestLine(text.split("\n")).length;
         return longestLineLength * this.charWidth;
     }
 
     public getHeightForLines(lines: number): number {
         return lines * this.lineHeight;
+    }
+
+    getLongestLine(lines: string[]): string {
+        return lines.reduce((max, line) => line.length > max.length ? line : max, "");
+    }
+
+    public tail(): void {
+        this.ns.tail();
+        const log = this.ns.getScriptLogs()
+        const longestLine = this.getLongestLine(log).length;
+        this.ns.resizeTail(longestLine * this.charWidth, this.getHeightForLines(log.length));
     }
 }
