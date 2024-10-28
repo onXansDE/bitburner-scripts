@@ -32,14 +32,28 @@ export async function main(ns: NS): Promise<void> {
 	const getExpansionMove = (board: string[], validMoves: boolean[][]) => {
 		const moveOptions = [];
 		const size = board[0].length;
+		const state = ns.go.getBoardState();
 
-		for (let i = 0; i < size; i++) {
-			for (let j = 0; j < size; j++) {
-				const isValid = validMoves[i][j];
-				const isReserved = i % 2 === 1 || j % 2 === 1;
-				const north = i - 1 >= 0 && board[i - 1][j] === "O";
+		for (let x = 0; x < size; x++) {
+			for (let y = 0; y < size; y++) {
+				const isValid = validMoves[x][y];
+				const isReserved = x % 2 === 1 || y % 2 === 1;
+				const isNorthFriendly = state[x - 1]?.[y] === "X";
+				const isSouthFriendly = state[x + 1]?.[y] === "X";
+				const isWestFriendly = state[x]?.[y - 1] === "X";
+				const isEastFriendly = state[x]?.[y + 1] === "X";
+				const isExpansion =
+					isNorthFriendly ||
+					isSouthFriendly ||
+					isWestFriendly ||
+					isEastFriendly;
+				if (isValid && isReserved && isExpansion) {
+					moveOptions.push([x, y]);
+				}
 			}
 		}
+
+		return moveOptions[0] ?? [];
 	};
 
 	// eslint-disable-next-line no-constant-condition
@@ -48,7 +62,12 @@ export async function main(ns: NS): Promise<void> {
 			const validMoves = ns.go.analysis.getValidMoves();
 			const board = ns.go.getBoardState();
 
-			const move = getRandomMove(board, validMoves);
+			let move = getExpansionMove(board, validMoves);
+			if (move.length === 0) {
+				move = getRandomMove(board, validMoves);
+				ns.print("No expansion moves found, making random move");
+			}
+
 			if (move.length === 0) {
 				result = await ns.go.passTurn();
 			} else {
