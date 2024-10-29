@@ -11,7 +11,8 @@ export async function main(ns: NS): Promise<void> {
     const formating = new TextFormater(ns);
     const ui = new UIHandler(ns);
     
-    const ram_check = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024];
+    const ram_check = Array.from({ length: 20 }, (_, i) => 2 ** (i + 1));
+
     ram_check.forEach((ram) => {
         const cost = ns.getPurchasedServerCost(ram);
         ns.print(`INFO Cost for ${ram}GB: ${formating.formatMoney(cost)}`);

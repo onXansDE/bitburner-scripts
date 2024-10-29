@@ -37,11 +37,6 @@ export class FileHandler {
 
     public runScript(server: string, script: string, threads: number = 1, ...args: string[]): number {
         const pid = this.ns.exec(script, server, threads, ...args);
-        if (pid === 0) {
-            this.ns.print(`ERROR Failed to start script ${script} on ${server}`);
-        } else {
-            this.ns.print(`SUCCESS Started script ${script} [${args.join(", ")}] (${threads}) on ${server} with PID ${pid}`);
-        }
         return pid;
     }
 
@@ -51,6 +46,7 @@ export class FileHandler {
             return false;
         }
         while(this.ns.isRunning(pid)) {
+            
             await this.ns.sleep(500);
         }
         return true;

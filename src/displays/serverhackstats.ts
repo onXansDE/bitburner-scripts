@@ -31,21 +31,10 @@ export async function main(ns: NS): Promise<void> {
         ns.print(`Security: ${tf.getFormatedInfo(server, DisplayPreset.DIFFICULTY_PERCENT)}`);
         ns.print(`Money: ${tf.getFormatedInfo(server, DisplayPreset.MONEY_FULL_PERCENT)} ${tf.getTrendFormated(moneyHistory)}`);
         ns.print(``);
-        await ns.sleep(1000);
+        await ns.sleep(1000 * 10);
+        if (moneyHistory.length > 200) {
+            moneyHistory.shift();
+        }
         ns.clearLog();
-    }
-}
-
-function formatMoney(money: number): string {
-    if (money >= 1e12) {
-        return (money / 1e12).toFixed(4) + ' T';
-    } else if (money >= 1e9) {
-        return (money / 1e9).toFixed(4) + ' B';
-    } else if (money >= 1e6) {
-        return (money / 1e6).toFixed(4) + ' M';
-    } else if (money >= 1e3) {
-        return (money / 1e3).toFixed(4) + ' k';
-    } else {
-        return money.toFixed(2);
     }
 }
