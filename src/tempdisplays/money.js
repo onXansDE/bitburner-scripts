@@ -19,7 +19,10 @@ export async function main(ns) {
 				moneyHistory
 			)}`
 		);
-		ns.print(``);
+		if (moneyHistory.length > 200) {
+			moneyHistory.shift();
+		}
+		ns.print(` `);
 		await ns.sleep(interval * 1000);
 		ns.clearLog();
 	}
