@@ -37,7 +37,7 @@ export async function main(ns: NS): Promise<void> {
 		for (let x = 0; x < size; x++) {
 			for (let y = 0; y < size; y++) {
 				const isValid = validMoves[x][y];
-				const isReserved = x % 2 === 1 || y % 2 === 1;
+				const isNotReserved = x % 2 === 1 || y % 2 === 1;
 				const isNorthFriendly = state[x - 1]?.[y] === "X";
 				const isSouthFriendly = state[x + 1]?.[y] === "X";
 				const isWestFriendly = state[x]?.[y - 1] === "X";
@@ -47,25 +47,84 @@ export async function main(ns: NS): Promise<void> {
 					isSouthFriendly ||
 					isWestFriendly ||
 					isEastFriendly;
-				if (isValid && isReserved && isExpansion) {
+				if (isValid && isNotReserved && isExpansion) {
+					moveOptions.push([x, y]);
+				}
+			}
+		}
+		const randomIndex = Math.floor(Math.random() * moveOptions.length);
+		return moveOptions[randomIndex] ?? [];
+	};
+
+	const getCaptureMove = (board: string[], validMoves: boolean[][]) => {
+		const moveOptions = [];
+		const size = board[0].length;
+		const liberties = ns.go.analysis.getLiberties();
+		const state = ns.go.getBoardState();
+
+		for (let x = 0; x < size; x++) {
+			for (let y = 0; y < size; y++) {
+				const isValid = validMoves[x][y];
+				const northLiberty =
+					liberties[x - 1]?.[y] === 1 && state[x - 1]?.[y] === "O";
+				const southLiberty =
+					liberties[x + 1]?.[y] === 1 && state[x + 1]?.[y] === "O";
+				const westLiberty =
+					liberties[x]?.[y - 1] === 1 && state[x]?.[y - 1] === "O";
+				const eastLiberty =
+					liberties[x]?.[y + 1] === 1 && state[x]?.[y + 1] === "O";
+				const isLiberty =
+					northLiberty || southLiberty || westLiberty || eastLiberty;
+				if (isValid && isLiberty) {
 					moveOptions.push([x, y]);
 				}
 			}
 		}
 
-		return moveOptions[0] ?? [];
+		const randomIndex = Math.floor(Math.random() * moveOptions.length);
+		return moveOptions[randomIndex] ?? [];
 	};
 
+	const getDefendMove = (board: string[], validMoves: boolean[][]) => {
+		const moveOptions = [];
+		const size = board[0].length;
+		const liberties = ns.go.analysis.getLiberties();
+		const state = ns.go.getBoardState();
+
+		for (let x = 0; x < size; x++) {
+			for (let y = 0; y < size; y++) {
+				const isValid = validMoves[x][y];
+				const northLiberty =
+					liberties[x - 1]?.[y] === 1 && state[x - 1]?.[y] === "X";
+				const southLiberty =
+					liberties[x + 1]?.[y] === 1 && state[x + 1]?.[y] === "X";
+				const westLiberty =
+					liberties[x]?.[y - 1] === 1 && state[x]?.[y - 1] === "X";
+				const eastLiberty =
+					liberties[x]?.[y + 1] === 1 && state[x]?.[y + 1] === "X";
+				const isLiberty =
+					northLiberty || southLiberty || westLiberty || eastLiberty;
+				if (isValid && isLiberty) {
+					moveOptions.push([x, y]);
+				}
+			}
+		}
+
+		const randomIndex = Math.floor(Math.random() * moveOptions.length);
+		return moveOptions[randomIndex] ?? [];
+	};
 	// eslint-disable-next-line no-constant-condition
 	while (true) {
 		do {
 			const validMoves = ns.go.analysis.getValidMoves();
 			const board = ns.go.getBoardState();
 
-			let move = getExpansionMove(board, validMoves);
+			let move = getCaptureMove(board, validMoves);
+			if (move.length === 0) {
+				move = getExpansionMove(board, validMoves);
+			}
 			if (move.length === 0) {
 				move = getRandomMove(board, validMoves);
-				ns.print("No expansion moves found, making random move");
 			}
 
 			if (move.length === 0) {
