@@ -82,11 +82,14 @@ export class TextFormater {
         if (records.length < 2) {
             return "";
         }
-        const last = records[records.length - 1];
-        const before = records[records.length - 2];
-        const diff = last - before;
+        // calculate average diffrence rate per record
+        let totalDiff = 0;
+        for (let i = 1; i < records.length; i++) {
+            totalDiff += records[i] - records[i - 1];
+        }
+        const diff = totalDiff / records.length;
         const trend = diff > 0 ? "📈" : "📉";
-        return `${trend} ${diff.toFixed(2)}`;
+        return `${this.formatMoney(diff)}`;
     }
 
     formatString(template: string, values: (string | number)[]): string {

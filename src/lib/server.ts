@@ -167,18 +167,16 @@ export class ServerHandler {
         this.openPorts(server);
         this.ns.nuke(server.hostname);
         if(this.ns.hasRootAccess(server.hostname)) {
-            this.ns.tprint(`SUCCESS Root access to ${server.hostname} gained`);
-            return true;
+            return false;
         }
         return false;
     }
 
     public killAllProcesses(server: Server | string): boolean {
         const serverName = typeof server === "string" ? server : server.hostname;
-        const processes = this.ns.ps(serverName);
         let error = false;
-        for (const process of processes) {
-            this.ns.kill(process.pid) ? this.ns.print(`SUCCESS Killed process ${process.filename} on ${serverName}`) : error = true;
+        for (const process of this.ns.ps(serverName)) {
+            this.ns.kill(process.pid) ? true : error = true;
         }
         return !error;
     }
@@ -209,7 +207,7 @@ export class ServerHandler {
         const files = this.ns.ls(serverName, substring);
         let error = false;
         for (const file of files) {
-            this.ns.rm(file, serverName) ? this.ns.print(`SUCCESS Removed file ${file} from ${serverName}`) : error = true;
+            this.ns.rm(file, serverName) ? true : error = true;
         }
         return !error;
     }
