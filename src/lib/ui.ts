@@ -1,32 +1,39 @@
 import { NS } from "@ns";
+import { ReactDOM } from "./react";
 
 export class UIHandler {
-    private ns: NS;
+	private ns: NS;
 
-    constructor(ns: NS) {
-        this.ns = ns;
-    }
+	constructor(ns: NS) {
+		this.ns = ns;
+	}
 
-    private charWidth = 10;
-    private lineHeight = 8;
+	private charWidth = 10;
+	private lineHeight = 24;
 
-    public getTextWidth(text: string): number {
-        const longestLineLength = this.getLongestLine(text.split("\n")).length;
-        return longestLineLength * this.charWidth;
-    }
+	public getHeightForLines(lines: number): number {
+		return lines * this.lineHeight;
+	}
 
-    public getHeightForLines(lines: number): number {
-        return lines * this.lineHeight;
-    }
+	private maxLineLength(lines: string[]): number {
+		let longestLine = 0;
+		for (const line of lines) {
+			if (line.length > longestLine) {
+				longestLine = line.length;
+			}
+		}
+		return longestLine;
+	}
 
-    getLongestLine(lines: string[]): string {
-        return lines.reduce((max, line) => line.length > max.length ? line : max, "");
-    }
+	public tail(): void {
+		this.ns.tail();
+	}
 
-    public tail(): void {
-        this.ns.tail();
-        const log = this.ns.getScriptLogs()
-        const longestLine = this.getLongestLine(log).length;
-        this.ns.resizeTail(longestLine * this.charWidth, this.getHeightForLines(log.length));
-    }
+	public autoSize() {
+		const log = this.ns.getScriptLogs();
+		const longestLine = this.maxLineLength(log);
+		const width = longestLine * this.charWidth;
+		const height = this.getHeightForLines(log.length + 1);
+		this.ns.resizeTail(width, height);
+	}
 }
