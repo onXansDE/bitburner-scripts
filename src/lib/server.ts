@@ -1,4 +1,4 @@
-import { NS, Server } from "@ns";
+import { NS, ProcessInfo, Server } from "@ns";
 
 export class ServerHandler {
 	private ns: NS;
@@ -199,16 +199,15 @@ export class ServerHandler {
 		return !error;
 	}
 
-	public getProcesses(server: Server | string, name?: string): number[] {
+	public getProcesses(server: Server | string, name?: string): ProcessInfo[] {
 		const serverName = typeof server === "string" ? server : server.hostname;
 		const processes = this.ns.ps(serverName);
 		if (name) {
-			return processes
-				.filter((proc) => proc.filename === name)
-				.map((proc) => proc.pid);
+			return processes.filter((proc) => proc.filename === name);
 		}
-		return processes.map((proc) => proc.pid);
+		return processes.map((proc) => proc);
 	}
+
 
 	public killProcesses(pids: number[] | number): boolean {
 		let killed = 0;

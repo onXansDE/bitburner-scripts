@@ -1,14 +1,20 @@
 import { GoOpponent, NS } from "@ns";
-import { SubNethandler } from "/lib/takeover";
+import { MoveDecisionHandler } from "/lib/takeover";
+import { UIHandler } from "/lib/ui";
 
 export async function main(ns: NS): Promise<void> {
 	ns.disableLog("ALL");
 	ns.clearLog();
 
-	const enemy: GoOpponent = "The Black Hand";
+	const choices = ["Netburners", "Slum Snakes", "The Black Hand"];
+	const choice = await ns.prompt("Choose enemy", { type: "select", choices });
+
+	const enemy: GoOpponent = choice as GoOpponent;
 	const fieldSize: 5 | 7 | 9 | 13 = 7;
 
-	const th = new SubNethandler(ns);
+	const th = new MoveDecisionHandler(ns);
+	const ui = new UIHandler(ns);
+	ui.tail();
 
 	ns.go.resetBoardState(enemy, fieldSize);
 	ns.print("Starting game...");
@@ -22,8 +28,11 @@ export async function main(ns: NS): Promise<void> {
 	let gamesPlayed = 0;
 	let gamesWon = 0;
 
+	let windowResiszed = false;
+
 	// eslint-disable-next-line no-constant-condition
 	while (true) {
+		let stats = ns.go.analysis.getStats();
 		do {
 			const validMoves = ns.go.analysis.getValidMoves();
 			const board = ns.go.getBoardState();
@@ -50,8 +59,12 @@ export async function main(ns: NS): Promise<void> {
 				).toFixed(2)}%)`
 			);
 			ns.print(`Currently playing against: ${enemy}`);
+			const entries = Object.entries(stats);
+			for (const [opp, statistics] of entries) {
+				const winRate = (statistics.wins / (statistics.wins + statistics.losses)) * 100;
+				ns.print(`${opp}: ${statistics.wins} - ${statistics.losses} (${winRate.toFixed(2)}%) Streak: ${statistics.winStreak}/${statistics.highestWinStreak}`);
+			}
 		} while (result?.type !== "gameOver");
-		ns.clearLog();
 		const state = ns.go.getGameState();
 		if (state.blackScore > state.whiteScore) {
 			ns.print("Black wins");
@@ -59,9 +72,17 @@ export async function main(ns: NS): Promise<void> {
 		} else {
 			ns.print("White wins");
 		}
+
+		ns.print("Starting game...");
+		stats = ns.go.analysis.getStats();
+		if (!windowResiszed) {
+			ui.autoSize();
+			windowResiszed = true;
+		}
+
 		gamesPlayed++;
 		ns.go.resetBoardState(enemy, fieldSize);
-		ns.print("Starting game...");
+		
 		await ns.sleep(200);
 	}
 }

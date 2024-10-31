@@ -1,5 +1,6 @@
 import { NS } from "@ns";
 import { DisplayPreset, TextFormater } from "/lib/formating";
+import { UIHandler } from "/lib/ui";
 
 export async function main(ns: NS): Promise<void> {
     ns.disableLog("ALL");
@@ -7,9 +8,9 @@ export async function main(ns: NS): Promise<void> {
 
     const tf = new TextFormater(ns);
 
-    const servername = String(ns.args[0]);
+    const servername = (await ns.prompt("Server to track", {type: "text"})).toString();
 
-    if (ns.args.length !== 1 || !ns.serverExists(servername)) {
+    if (!ns.serverExists(servername)) {
         ns.tprint("No valid server provided");
         return;
     }
@@ -20,21 +21,27 @@ export async function main(ns: NS): Promise<void> {
         return;
     }
     
-    ns.tail()
+    const ui = new UIHandler(ns);
+    ui.tail();
 
     const moneyHistory = [server.moneyAvailable ?? 0];
 
+    // eslint-disable-next-line no-constant-condition
     while (true) {
         server = ns.getServer(servername);
         moneyHistory.push(server.moneyAvailable ?? 0);
         ns.print(`Server: ${servername} (${server.ip}, ${server.organizationName})`);
+        const growTime = ns.getGrowTime(servername);
+        const hackTime = ns.getHackTime(servername);
+        const weakenTime = ns.getWeakenTime(servername);
+        ns.print(`Grow Time: ${ns.tFormat(growTime)}\nHack Time: ${ns.tFormat(hackTime)}\nWeaken Time: ${ns.tFormat(weakenTime)}`);
         ns.print(`Security: ${tf.getFormatedInfo(server, DisplayPreset.DIFFICULTY_PERCENT)}`);
-        ns.print(`Money: ${tf.getFormatedInfo(server, DisplayPreset.MONEY_FULL_PERCENT)} ${tf.getTrendFormated(moneyHistory)}`);
+        ns.print(`Money: ${tf.getFormatedInfo(server, DisplayPreset.MONEY_FULL_PERCENT)} ${tf.formatMoney(tf.getTrendFormated(moneyHistory).diff)}`);
         ns.print(``);
-        await ns.sleep(1000 * 10);
         if (moneyHistory.length > 200) {
             moneyHistory.shift();
         }
+        await ns.sleep(1000 * 10);
         ns.clearLog();
     }
 }

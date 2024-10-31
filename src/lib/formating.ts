@@ -8,16 +8,18 @@ export class TextFormater {
 	}
 
 	public formatMoney(money: number): string {
+		const isNegative = money < 0;
+		money = Math.abs(money);
 		if (money >= 1e12) {
-			return (money / 1e12).toFixed(4) + " T";
+			return (isNegative ? "-":"") + (money / 1e12).toFixed(4) + " T";
 		} else if (money >= 1e9) {
-			return (money / 1e9).toFixed(4) + " B";
+			return (isNegative ? "-":"") + (money / 1e9).toFixed(4) + " B";
 		} else if (money >= 1e6) {
-			return (money / 1e6).toFixed(4) + " M";
+			return (isNegative ? "-":"") + (money / 1e6).toFixed(4) + " M";
 		} else if (money >= 1e3) {
-			return (money / 1e3).toFixed(4) + " k";
+			return (isNegative ? "-":"") + (money / 1e3).toFixed(4) + " k";
 		} else {
-			return money.toFixed(4);
+			return money.toFixed(2);
 		}
 	}
 

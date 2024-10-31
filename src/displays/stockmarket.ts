@@ -1,40 +1,37 @@
 import { NS } from "@ns";
 import { TextFormater } from "/lib/formating";
+import { StocksHandler } from "/lib/stocks";
+import { StockInfo, StockSort } from "/lib/types";
+import { UIHandler } from "/lib/ui";
 
 export async function main(ns: NS): Promise<void> {
 	ns.disableLog("ALL");
 	ns.clearLog();
 
-	const tf = new TextFormater(ns);
+	const sortChoices: StockSort[] = Object.values(StockSort);
+	const sort = await ns.prompt("Sort by", { type: "select",choices: sortChoices });
+
+	if (!sortChoices.includes(sort as StockSort)) {
+		ns.tprint(`Invalid sort option: ${sort}`);
+		return;
+	}
+
+
+	const sth = new StocksHandler(ns);
+	const ui = new UIHandler(ns);
 
 	ns.tail();
-	const symobls = ns.stock.getSymbols();
-
-	const priceHistory: number[][] = Array.from(
-		{ length: symobls.length },
-		() => []
-	);
 
 	// eslint-disable-next-line no-constant-condition
 	while (true) {
-		symobls.forEach((symbol, index) => {
-			const position = ns.stock.getPosition(symbol);
-			const comapany = ns.stock.getOrganization(symbol);
-			const sharePrice = ns.stock.getPrice(symbol);
-			const totalShares = ns.stock.getMaxShares(symbol);
-			const value = sharePrice * totalShares;
-			priceHistory[index].push(value);
-			if (priceHistory[index].length > 10) {
-				priceHistory[index].shift();
-			}
-			ns.print(
-				`Stock: ${symbol} | ${comapany} (${tf.formatMoney(value)}) -> ${
-					position[0]
-				} $${tf.formatMoney(position[1] * position[0])}`
-			);
+		const stocks = sth.getStocksSortedBy(sort as StockSort);
+		stocks.forEach((stock: StockInfo) => {
+			ns.print(`${stock.symbol}: ${stock.prediction > 0.5 ? "📈" : "📉"}: ${stock.prediction.toFixed(3)} ⚡${(stock.volatility * 100).toFixed(2)}`);
 		});
+
 		await ns.stock.nextUpdate();
 		ns.print("Waiting for next update...");
+		ui.autoSize();
 		ns.clearLog();
 	}
 }

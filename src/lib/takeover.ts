@@ -1,6 +1,6 @@
 import { NS } from "@ns";
 
-export class SubNethandler {
+export class MoveDecisionHandler {
 	private ns: NS;
 
 	constructor(ns: NS) {
