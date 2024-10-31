@@ -1,179 +1,195 @@
 import { NS } from "@ns";
 
-export class MoveDecisionHandler {
+export class MoveGenerator {
 	private ns: NS;
 
 	constructor(ns: NS) {
 		this.ns = ns;
 	}
 
-	public getMove(board: string[], validMoves: boolean[][]) {
-		let moves = this.getDefendMove(board, validMoves);
-		if (moves.length === 0) {
-			moves = this.getCaptureMove(board, validMoves);
-		}
-		if (moves.length === 0) {
-			moves = this.getExpansionMove(board, validMoves);
-		}
+	private getAdjacentCords(x: number, y: number) {
+		return [
+			[x - 1, y],
+			[x + 1, y],
+			[x, y - 1],
+			[x, y + 1],
+		];
+	}
 
-		if (moves.length === 0) {
-			moves = this.getRandomMove(board, validMoves);
-		}
+	public getMove(validMoves: boolean[][]) {
+		const moves = this.checkMoves(this.ns.go.getBoardState(), validMoves);
 		return moves;
 	}
 
-	public getRandomMove(board: string[], validMoves: boolean[][]) {
-		const moveOptions = [];
+	public checkMoves(board: string[], validMoves: boolean[][]) {
+		const moveOptions: FoundMove[] = [];
 		const size = board[0].length;
 
 		for (let i = 0; i < size; i++) {
 			for (let j = 0; j < size; j++) {
 				const isNotReserved = i % 2 === 1 || j % 2 === 1;
-				if (validMoves[i][j] && isNotReserved) {
-					moveOptions.push([i, j]);
+				const isValid = validMoves[i][j];
+				if(!isValid || !isNotReserved) {
+					continue;
 				}
+				const smotheringScore = this.checkSmothering(board, validMoves, i, j);
+				const expansionScore = this.checkExpansion(board, validMoves, i, j);
+				const captureScore = this.checkCapture(board, validMoves, i, j);
+				const defendScore = this.checkDefend(board, validMoves, i, j) * 2;
+				const score = (smotheringScore + expansionScore + captureScore + defendScore);
+				moveOptions.push({ x: i, y: j, score });
 			}
 		}
 
-		const randomIndex = Math.floor(Math.random() * moveOptions.length);
-		return moveOptions[randomIndex] ?? [];
+		return moveOptions.sort((a, b) => a.score - b.score);
 	}
 
-	public getExpansionMove(board: string[], validMoves: boolean[][]) {
-		const moveOptions = [];
-		const size = board[0].length;
-		const state = this.ns.go.getBoardState();
-
-		for (let x = 0; x < size; x++) {
-			for (let y = 0; y < size; y++) {
-				const isValid = validMoves[x][y];
-				const isNotReserved = x % 2 === 1 || y % 2 === 1;
-				const isNorthFriendly = state[x - 1]?.[y] === "X";
-				const isSouthFriendly = state[x + 1]?.[y] === "X";
-				const isWestFriendly = state[x]?.[y - 1] === "X";
-				const isEastFriendly = state[x]?.[y + 1] === "X";
-				const isExpansion =
-					isNorthFriendly ||
-					isSouthFriendly ||
-					isWestFriendly ||
-					isEastFriendly;
-				if (isValid && isNotReserved && isExpansion) {
-					moveOptions.push([x, y]);
-				}
+	public checkSmothering(board: string[], validMoves: boolean[][], x: number, y: number): number {
+		let networks = this.getAdjacentNetworks(x, y, "O");
+		if(networks.length > 0) {
+			networks = networks.sort((a, b) => a.liberties - b.liberties);
+			const weakest = networks[0];
+			const isSmothering = weakest.liberties < 3;
+			if (isSmothering) {
+				return weakest.size;
 			}
 		}
-		const randomIndex = Math.floor(Math.random() * moveOptions.length);
-		return moveOptions[randomIndex] ?? [];
+		return 0;
 	}
 
-	public getCaptureMove(board: string[], validMoves: boolean[][]) {
-		const moveOptions = [];
-		const size = board[0].length;
-		const liberties = this.ns.go.analysis.getLiberties();
-		const state = this.ns.go.getBoardState();
-
-		for (let x = 0; x < size; x++) {
-			for (let y = 0; y < size; y++) {
-				const isValid = validMoves[x][y];
-				const isLiberty =
-					this.countAdjacentLiberties(liberties, state, x, y, "O") > 0;
-				if (isValid && isLiberty) {
-					moveOptions.push([x, y]);
-				}
+	public checkExpansion(board: string[], validMoves: boolean[][], x: number, y: number): number {
+		let networks = this.getAdjacentNetworks(x, y, "X");
+		if(networks.length > 0) {
+			networks = networks.sort((a, b) => a.size - b.size);
+			const isExpansion = networks.length > 0;
+			if (isExpansion) {
+				return networks[0].size;
 			}
 		}
-
-		const randomIndex = Math.floor(Math.random() * moveOptions.length);
-		return moveOptions[randomIndex] ?? [];
+		return 0;
 	}
 
-	public getDefendMove(board: string[], validMoves: boolean[][]) {
-		const moveOptions = [];
-		const size = board[0].length;
-		const liberties = this.ns.go.analysis.getLiberties();
-		const state = this.ns.go.getBoardState();
-
-		for (let x = 0; x < size; x++) {
-			for (let y = 0; y < size; y++) {
-				const isValid = validMoves[x][y];
-				const isLiberty =
-					this.countAdjacentLiberties(liberties, state, x, y, "X", 1) > 0;
-				const canDefend = this.getAdjacentNumber(state, x, y, ".") > 1;
-				const saveNetworkLoc = this.getSafeNetwork(liberties, state, x, y);
-				if (isValid && isLiberty) {
-					if (saveNetworkLoc.mostLiberties > 3 || canDefend) {
-						moveOptions.push([x, y]);
-					}
-				}
+	public checkCapture(board: string[], validMoves: boolean[][], x: number, y: number): number {
+		const networks = this.getAdjacentNetworks(x, y, "0");
+		if(networks.length > 0) {
+			const weakest = networks.sort((a, b) => a.liberties - b.liberties)[0];
+			if (weakest.liberties < 2) {
+				return weakest.size;
 			}
 		}
-
-		const randomIndex = Math.floor(Math.random() * moveOptions.length);
-		return moveOptions[randomIndex] ?? [];
+		return 0;
 	}
 
-	public countAdjacentLiberties(
-		liberties: number[][],
-		state: string[],
+	public checkDefend(board: string[], validMoves: boolean[][], x: number, y: number): number {
+		const networks = this.getAdjacentNetworks(x, y, "X");
+		if(networks.length > 0) {
+			const weakest = networks.sort((a, b) => a.liberties - b.liberties)[0];
+			if (weakest.liberties < 2) {
+				return weakest.size;
+			}
+		}
+		return 0;
+	}
+
+	public adjacentNetworksWithLiberties(
 		x: number,
 		y: number,
 		color = "X",
 		libertieCount = 1
 	) {
+		const liberties = this.ns.go.analysis.getLiberties();
+		const state = this.ns.go.getBoardState();
 		let numLiberties = 0;
-		if (liberties[x - 1]?.[y] === libertieCount && state[x - 1]?.[y] === color)
-			numLiberties++;
-		if (liberties[x + 1]?.[y] === libertieCount && state[x + 1]?.[y] === color)
-			numLiberties++;
-		if (liberties[x]?.[y - 1] === libertieCount && state[x]?.[y - 1] === color)
-			numLiberties++;
-		if (liberties[x]?.[y + 1] === libertieCount && state[x]?.[y + 1] === color)
-			numLiberties++;
+		for (const [_x, _y] of this.getAdjacentCords(x, y)) {
+			if (state[x]?.[y] === color) {
+				if (liberties[_x]?.[_y] === libertieCount && state[_x]?.[_y] === color) {
+					numLiberties++;
+				}
+			}
+		}
 		return numLiberties;
 	}
 
+	
+
 	public getSafeNetwork(
-		liberties: number[][],
-		state: string[],
 		x: number,
-		y: number
+		y: number,
+		color = "X"
 	) {
+		const liberties = this.ns.go.analysis.getLiberties();
+		const state = this.ns.go.getBoardState();
 		let mostLiberties = 0;
 		let largestNetworkCords: number[] = [];
-		const color = "X";
-		if (state[x - 1]?.[y] === color) {
-			if (liberties[x - 1]?.[y] > mostLiberties) {
-				mostLiberties = liberties[x - 1]?.[y];
-				largestNetworkCords = [x - 1, y];
-			}
-		}
-		if (state[x + 1]?.[y] === color) {
-			if (liberties[x + 1]?.[y] > mostLiberties) {
-				mostLiberties = liberties[x + 1]?.[y];
-				largestNetworkCords = [x + 1, y];
-			}
-		}
-		if (state[x]?.[y - 1] === color) {
-			if (liberties[x]?.[y - 1] > mostLiberties) {
-				mostLiberties = liberties[x]?.[y - 1];
-				largestNetworkCords = [x, y - 1];
-			}
-		}
-		if (state[x]?.[y + 1] === color) {
-			if (liberties[x]?.[y + 1] > mostLiberties) {
-				mostLiberties = liberties[x]?.[y + 1];
-				largestNetworkCords = [x, y + 1];
+		for (const [_x, _y] of this.getAdjacentCords(x, y)) {
+			if (state[_x]?.[_y] === color) {
+				if (liberties[_x]?.[_y] > mostLiberties) {
+					mostLiberties = liberties[_x]?.[_y];
+					largestNetworkCords = [_x, _y];
+				}
 			}
 		}
 		return { largestNetworkCords, mostLiberties };
 	}
 
-	public getAdjacentNumber(state: string[], x: number, y: number, color = "X") {
+	public getAdjacentNumber(x: number, y: number, color = "X") {
 		let numAdjacent = 0;
-		if (state[x - 1]?.[y] === color) numAdjacent++;
-		if (state[x + 1]?.[y] === color) numAdjacent++;
-		if (state[x]?.[y - 1] === color) numAdjacent++;
-		if (state[x]?.[y + 1] === color) numAdjacent++;
+		const state = this.ns.go.getBoardState();
+		for (const [_x, _y] of this.getAdjacentCords(x, y)) {
+			if (state[_x]?.[_y] === color) {
+				numAdjacent++;
+			}
+		}
 		return numAdjacent;
 	}
+
+	public getAdjacentNetworks(x: number, y: number, color = "X") {
+		const networks: Network[] = [];
+		const liberties = this.ns.go.analysis.getLiberties();
+		const state = this.ns.go.getBoardState();
+		for (const [_x, _y] of this.getAdjacentCords(x, y)) {
+			if (state[_x]?.[_y] === color) {
+				const network = {
+					x: _x,
+					y: _y,
+					liberties: liberties[_x]?.[_y],
+					color,
+					size: this.getNetworkSize(_x, _y),
+				};
+				networks.push(network);
+			}
+		}
+		return networks;
+	}
+
+	public getNetworkSize(x: number, y: number) {
+		const chains = this.ns.go.analysis.getChains();
+		const targeNetwork = chains[x]?.[y];
+		if (!targeNetwork) {
+			return 0;
+		}
+		let size = 0;
+		for (let x = 0; x < chains.length; x++) {
+			for (let y = 0; y < chains[x].length; y++) {
+				if (chains[x]?.[y] === targeNetwork) {
+					size++;
+				}
+			}
+		}
+		return size;
+	}
+}
+
+export interface FoundMove {
+	x: number;
+	y: number;
+	score: number;
+}
+
+export interface Network {
+	x: number;
+	y: number;
+	liberties: number;
+	color: string;
+	size: number;
 }

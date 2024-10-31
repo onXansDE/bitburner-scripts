@@ -88,6 +88,12 @@ export class StocksHandler {
         return stocks.sort((b, a) => (a.position.longOwned * a.averagePrice) - (b.position.longOwned * b.averagePrice) + (a.position.shortOwned * a.averagePrice) - (b.position.shortOwned * b.averagePrice));
     }
 
+    private getStocksWithPosition() {
+        const symbols = this.getSymbols();
+        const stocks = symbols.map(symbol => this.getStockInfo(symbol));
+        return stocks.filter(stock => stock.position.longOwned > 0 || stock.position.shortOwned > 0);
+    }
+
     public getStocksSortedBy(sort: StockSort) {
         switch (sort) {
             case "value":
@@ -100,6 +106,8 @@ export class StocksHandler {
                 return this.getStocksByVolatility();
             case "position":
                 return this.getStocksByPosition();
+            case "owned":
+                return this.getStocksWithPosition();
             default:
                 return [];
         }

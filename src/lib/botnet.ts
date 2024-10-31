@@ -18,10 +18,11 @@ export class BotnetHandler {
 	public createServersWithPrefix(
 		prefix: string,
 		count: number,
-		ram: number
+		ram: number,
+		startindex = 0
 	): string[] {
 		return Array.from({ length: count }, (_, i) =>
-			this.createServer(`${prefix}-${i}`, ram)
+			this.createServer(`${prefix}-${i+startindex}`, ram)
 		);
 	}
 
@@ -36,7 +37,8 @@ export class BotnetHandler {
 	botnetPrefix = "botnet";
 
 	public createBotnetServers(count: number, ram: number): string[] {
-		return this.createServersWithPrefix(this.botnetPrefix, count, ram);
+		const existingServerCount = this.getBotnetServers().length;
+		return this.createServersWithPrefix(this.botnetPrefix, count, ram, existingServerCount);
 	}
 
 	public getBotnetServers(): string[] {

@@ -40,10 +40,10 @@ export async function main(ns: NS): Promise<void> {
                 color = "\u001b[31m📉";
             }
             if (position.longValue > 0) {
-                ns.print(`${color}${stock.symbol}: LONG: ${tf.formatMoney(stock.position.averageLongPrice * stock.position.longOwned)} / ${tf.formatMoney(position.longValue)} -> ${tf.formatMoney(position.longGain)} (${position.longGainPercentage.toFixed(2)}%)${reset}`);
+                ns.print(`${color}${stock.symbol}: LONG: ${tf.formatMoney(stock.position.averageLongPrice * stock.position.longOwned)} / ${tf.formatMoney(position.longValue)} -> ${tf.formatMoney(position.longGain)} (${position.longGainPercentage.toFixed(2)}%)`);
             }
             if (position.shortValue > 0) {
-                ns.print(`${color}${stock.symbol}: SHORT: ${tf.formatMoney(stock.position.averageShortPrice * stock.position.shortOwned)} / ${tf.formatMoney(position.shortValue)} -> ${tf.formatMoney(position.shortGain)} (${position.shortGainPercentage.toFixed(2)}%)${reset}`);
+                ns.print(`${color}${stock.symbol}: SHORT: ${tf.formatMoney(stock.position.averageShortPrice * stock.position.shortOwned)} / ${tf.formatMoney(position.shortValue)} -> ${tf.formatMoney(position.shortGain)} (${position.shortGainPercentage.toFixed(2)}%)`);
             }
 		});
 

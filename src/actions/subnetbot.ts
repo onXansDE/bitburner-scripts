@@ -1,18 +1,18 @@
 import { GoOpponent, NS } from "@ns";
-import { MoveDecisionHandler } from "/lib/takeover";
+import { MoveGenerator } from "/lib/takeover";
 import { UIHandler } from "/lib/ui";
 
 export async function main(ns: NS): Promise<void> {
 	ns.disableLog("ALL");
 	ns.clearLog();
 
-	const choices = ["Netburners", "Slum Snakes", "The Black Hand"];
-	const choice = await ns.prompt("Choose enemy", { type: "select", choices });
+	const choices = ["Netburners", "Slum Snakes", "The Black Hand", "Tetrads", "Daedalus", "Illuminati"];
+	const choice = await ns.prompt("Choose a enemy to play against", { type: "select", choices });
 
 	const enemy: GoOpponent = choice as GoOpponent;
 	const fieldSize: 5 | 7 | 9 | 13 = 7;
 
-	const th = new MoveDecisionHandler(ns);
+	const th = new MoveGenerator(ns);
 	const ui = new UIHandler(ns);
 	ui.tail();
 
@@ -35,22 +35,17 @@ export async function main(ns: NS): Promise<void> {
 		let stats = ns.go.analysis.getStats();
 		do {
 			const validMoves = ns.go.analysis.getValidMoves();
-			const board = ns.go.getBoardState();
 
-			const move = th.getMove(board, validMoves);
+			const move = th.getMove(validMoves);
 
 			if (move.length === 0) {
 				result = await ns.go.passTurn();
 			} else {
-				result = await ns.go.makeMove(move[0], move[1]);
+				result = await ns.go.makeMove(move[0].x, move[0].y);
 			}
-
 			await ns.go.opponentNextTurn();
 			const state = ns.go.getGameState();
 			ns.clearLog();
-			for (let i = 0; i < board.length; i++) {
-				ns.print(board[i]);
-			}
 			ns.print(`Game scores: ${state.blackScore} - ${state.whiteScore}`);
 			ns.print(
 				`Games played: ${gamesPlayed} - Games won: ${gamesWon} (${(

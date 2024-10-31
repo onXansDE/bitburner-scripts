@@ -15,7 +15,8 @@ export enum StockSort {
     Forecast = "forecast",
     ShortForcast = "shortforecast",
     Volatility = "volatility",
-    Position = "position"
+    Position = "position",
+    Owned = "owned"
 }
 
 export interface PositionInfo {

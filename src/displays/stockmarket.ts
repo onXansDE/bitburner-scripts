@@ -19,18 +19,35 @@ export async function main(ns: NS): Promise<void> {
 
 	const sth = new StocksHandler(ns);
 	const ui = new UIHandler(ns);
+	const tf = new TextFormater(ns);
 
 	ns.tail();
 
+	let priceHistory: number[][] = [];
+	let priceStart: number[] = [];
+	let Iteration = 0;
 	// eslint-disable-next-line no-constant-condition
 	while (true) {
 		const stocks = sth.getStocksSortedBy(sort as StockSort);
-		stocks.forEach((stock: StockInfo) => {
-			ns.print(`${stock.symbol}: ${stock.prediction > 0.5 ? "📈" : "📉"}: ${stock.prediction.toFixed(3)} ⚡${(stock.volatility * 100).toFixed(2)}`);
+		if(priceHistory.length !== stocks.length) {
+			priceHistory = stocks.map(() => []);
+			priceStart = stocks.map((stock) => stock.averagePrice);
+		}
+		stocks.forEach((stock: StockInfo, index) => {
+			const price5TicksAgo = priceHistory[index][priceHistory[index].length - 5] ?? priceStart[index];
+			const price50TickAgo = priceHistory[index][priceHistory[index].length - 50] ?? priceStart[index];
+			const price200TickAgo = priceHistory[index][priceHistory[index].length - 200] ?? priceStart[index];
+			const startPrice = priceStart[index];
+			priceHistory[index].push(stock.averagePrice);
+			if(priceHistory[index].length > 1000) {
+				priceHistory[index].shift();
+			}
+			const diffrences = `(${tf.formatMoney(stock.averagePrice - price5TicksAgo)} | ${tf.formatMoney(stock.averagePrice - price50TickAgo)} | ${tf.formatMoney(stock.averagePrice - price200TickAgo)} | Start: ${tf.formatMoney(stock.averagePrice - startPrice)})`;
+			ns.print(`${stock.symbol}(${stock.organization}): ${stock.prediction > 0.5 ? "📈" : "📉"}: ${stock.prediction.toFixed(3)} ⚡${(stock.volatility * 100).toFixed(2)} Price: ${tf.formatMoney(stock.averagePrice)} ${diffrences}`);
 		});
-
+		ns.print(`Iteration: ${Iteration}`);
+		Iteration++;
 		await ns.stock.nextUpdate();
-		ns.print("Waiting for next update...");
 		ui.autoSize();
 		ns.clearLog();
 	}

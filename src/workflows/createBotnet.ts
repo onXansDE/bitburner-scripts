@@ -1,14 +1,11 @@
 import { NS } from "@ns";
-import { ServerHandler } from "/lib/server";
 import { TextFormater } from "/lib/formating";
-import { UIHandler } from "/lib/ui";
 import { BotnetHandler } from "/lib/botnet";
 
 export async function main(ns: NS): Promise<void> {
     ns.disableLog("ALL");
     ns.clearLog();
     const scriptName = ns.getScriptName();
-    const ui = new UIHandler(ns);
     const bn = new BotnetHandler(ns);
     const formating = new TextFormater(ns);
     
@@ -26,7 +23,7 @@ export async function main(ns: NS): Promise<void> {
     if(totalCost > ns.getPlayer().money * 0.1) {
         ns.tprint(`ERROR Total cost of ${formating.formatMoney(totalCost)} is more than 10% of your money`);
         const decicion = await ns.prompt(`Do you want to continue?`);
-        if(decicion === "no") {
+        if(decicion === false) {
             ns.exit();
         }
     }

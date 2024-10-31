@@ -29,7 +29,7 @@ export async function main(ns: NS): Promise<void> {
 		`INFO: Hack: ${hackScriptRam} | Weaken: ${weakenScriptRam} | Grow: ${growScriptRam}`
 	);
 
-	const parts = [1, 3, 12];
+	const parts = [1, 3, 13];
 	const totalParts = parts.reduce((a, b) => a + b, 0);
 	ns.tprint(`INFO: Parts: ${parts.join(" | ")} | Total: ${totalParts}`);
 
@@ -68,17 +68,6 @@ export async function main(ns: NS): Promise<void> {
 			"attacks/singles/grow.js",
 		]);
 
-		if (hackThreads !== 0) {
-			const proc = fh.runScript(
-				server.hostname,
-				"attacks/singles/hack.js",
-				hackThreads,
-				target
-			);
-			if (proc === null) {
-				ns.print(`ERROR: Failed to launch hack on ${server.hostname}`);
-			}
-		}
 		if (weakenThreads !== 0) {
 			const proc = fh.runScript(
 				server.hostname,
@@ -90,7 +79,7 @@ export async function main(ns: NS): Promise<void> {
 				ns.print(`ERROR: Failed to launch weaken on ${server.hostname}`);
 			}
 		}
-
+		
 		if (growthThreads !== 0) {
 			const proc = fh.runScript(
 				server.hostname,
@@ -100,6 +89,17 @@ export async function main(ns: NS): Promise<void> {
 			);
 			if (proc === null) {
 				ns.print(`ERROR: Failed to launch grow on ${server.hostname}`);
+			}
+		}
+		if (hackThreads !== 0) {
+			const proc = fh.runScript(
+				server.hostname,
+				"attacks/singles/hack.js",
+				hackThreads,
+				target
+			);
+			if (proc === null) {
+				ns.print(`ERROR: Failed to launch hack on ${server.hostname}`);
 			}
 		}
 		await ns.asleep(random % 1000);

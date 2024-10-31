@@ -11,16 +11,20 @@ export class TextFormater {
 		const isNegative = money < 0;
 		money = Math.abs(money);
 		if (money >= 1e12) {
-			return (isNegative ? "-":"") + (money / 1e12).toFixed(4) + " T";
+			return (isNegative ? "-":"") + (money / 1e12).toFixed(2) + " T";
 		} else if (money >= 1e9) {
-			return (isNegative ? "-":"") + (money / 1e9).toFixed(4) + " B";
+			return (isNegative ? "-":"") + (money / 1e9).toFixed(2) + " B";
 		} else if (money >= 1e6) {
-			return (isNegative ? "-":"") + (money / 1e6).toFixed(4) + " M";
+			return (isNegative ? "-":"") + (money / 1e6).toFixed(2) + " M";
 		} else if (money >= 1e3) {
-			return (isNegative ? "-":"") + (money / 1e3).toFixed(4) + " k";
+			return (isNegative ? "-":"") + (money / 1e3).toFixed(2) + " k";
 		} else {
 			return money.toFixed(2);
 		}
+	}
+
+	public formatPercentage(value: number): string {
+		return value.toFixed(2) + "%";
 	}
 
 	public formatDifficulty(difficulty: number | undefined): string {
@@ -37,21 +41,27 @@ export class TextFormater {
 		// [isAdmin] serverName ->
 		let string = `[${server.hasAdminRights ? "x" : " "}${
 			server.backdoorInstalled ? "|💥" : ""
-		}] ${server.hostname} ->`;
+		}]	${this.getHostnameTab(server.hostname)} ->`;
 		// now add the rest of the properties based on the selection
 		for (const prop of selection) {
 			const info = this.getFormatedInfo(server, prop);
-			string += ` ${info}`;
+			string += `	${info}`;
 		}
 
 		return string;
+	}
+
+	private minHostnameLength = 20;
+	public getHostnameTab(hostname: string): string {
+		const diff = this.minHostnameLength - hostname.length;
+		return hostname + " ".repeat(diff);
 	}
 
 	public printOptimalThreadUsage(amounts: [number, number, number]): string {
 		return `Optimal thread usage: Growth: ${amounts[0]} | Hack: ${amounts[1]} | Weaken: ${amounts[2]}`;
 	}
 
-	getDefaultDisplay(): DisplayPreset[] {
+	public getDefaultDisplay(): DisplayPreset[] {
 		return [
 			DisplayPreset.MONEY_FULL_PERCENT,
 			DisplayPreset.DIFFICULTY_PERCENT,
@@ -65,6 +75,10 @@ export class TextFormater {
 				return this.formatString(preset, [
 					this.formatMoney(server.moneyAvailable ?? 0),
 				]);
+			case DisplayPreset.MONEY_PERCENT:
+				return this.formatString(preset, [
+					(((server.moneyAvailable ?? 0) / (server.moneyMax ?? 1)) * 100).toFixed(2),
+				]);
 			case DisplayPreset.MONEY_FULL:
 				return this.formatString(preset, [
 					this.formatMoney(server.moneyAvailable ?? 0),
@@ -77,6 +91,8 @@ export class TextFormater {
 					((server.moneyAvailable ?? 0) / (server.moneyMax ?? 1)) * 100,
 				]);
 			case DisplayPreset.DIFFICULTY_PERCENT:
+				return this.formatString(preset, [((server.hackDifficulty ?? 0) / (server.minDifficulty ?? 1)) * 100]);
+			case DisplayPreset.DIFFICULTY_FULL_PERCENT:
 				return this.formatString(preset, [
 					this.formatDifficulty(server.hackDifficulty) ?? 0,
 					this.formatDifficulty(server.minDifficulty) ?? 0,
@@ -142,10 +158,14 @@ export enum DisplayPreset {
 	MONEY = "%s$",
 	// 23.4 M$ | 50 M$
 	MONEY_FULL = "%s$ | %s$",
+	// 💸 50%
+	MONEY_PERCENT = "💸 %s%",
 	// 23.4 M$ / 50 M$ (50%)
 	MONEY_FULL_PERCENT = "%s$ / %s$ (%d%)",
+	// 🛑 55%
+	DIFFICULTY_PERCENT = "🛑 %d%",
 	// 11 / 20 (55%)
-	DIFFICULTY_PERCENT = "%s / %s (%d%)",
+	DIFFICULTY_FULL_PERCENT = "%d / %d (%d%)",
 	// 🔆 10
 	HACK_DIFFICULTY = "🔆 %d",
 }

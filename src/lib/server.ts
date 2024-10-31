@@ -23,6 +23,12 @@ export class ServerHandler {
 	public getRootServers(): string[] {
 		return this.getAllServers().filter((server) =>
 			this.ns.hasRootAccess(server)
+		); 
+	}
+
+	public getExternalServers(): string[] {
+		return this.getAllServers().filter((server) =>
+			!server.startsWith("home") && !server.startsWith("botnet") || !this.ns.getPurchasedServers().includes(server)
 		);
 	}
 
