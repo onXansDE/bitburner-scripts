@@ -25,3 +25,8 @@ export interface PositionInfo {
     shortOwned: number;
     averageShortPrice: number;
 }
+
+export enum ReservedPorts {
+    SERVER_STATS = 1337,
+    SERVER_ALERTS = 1338,
+}

@@ -11,6 +11,7 @@ export async function main(ns: NS): Promise<void> {
 	// eslint-disable-next-line no-constant-condition
 	while(true) {
         const servers = sh.getServers(hosts);
+        const finishedServers: string[] = [];
         for (const server of servers) {
             if(server.purchasedByPlayer) continue;
             if(!server.moneyMax || server.moneyMax === 0) continue;
@@ -18,6 +19,10 @@ export async function main(ns: NS): Promise<void> {
             if(!server.minDifficulty || server.minDifficulty === 0) continue;
             if(!server.hackDifficulty || server.hackDifficulty === 0) continue;
             if(!server.hasAdminRights) continue;
+            if(server.moneyAvailable === server.moneyMax && server.minDifficulty === server.hackDifficulty) {
+                finishedServers.push(server.hostname);
+                continue;
+            }
             if(server.minDifficulty < server.hackDifficulty) {
                 const time = ns.getWeakenTime(server.hostname);
                 ns.print(`${ns.tFormat(time)} to weaken ${server.hostname}...`);
@@ -31,6 +36,10 @@ export async function main(ns: NS): Promise<void> {
                 const result = await ns.grow(server.hostname);
                 ns.print(`Grew ${server.hostname} by ${result}`);
                 continue;
+            }
+            if (finishedServers.length === servers.length) {
+                ns.print("All servers are finished");
+                break;
             }
         }
         await ns.sleep(100);

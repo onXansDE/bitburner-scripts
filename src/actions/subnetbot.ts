@@ -32,6 +32,7 @@ export async function main(ns: NS): Promise<void> {
 
 	// eslint-disable-next-line no-constant-condition
 	while (true) {
+		
 		let stats = ns.go.analysis.getStats();
 		do {
 			const validMoves = ns.go.analysis.getValidMoves();

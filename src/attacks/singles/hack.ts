@@ -8,6 +8,7 @@ export async function main(ns: NS): Promise<void> {
         ns.exit();
     }
 
+    // eslint-disable-next-line no-constant-condition
     while (true) {
         const amount = await ns.hack(target);
         if (amount === 0) {

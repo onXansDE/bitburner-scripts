@@ -29,7 +29,7 @@ export async function main(ns: NS): Promise<void> {
 		`INFO: Hack: ${hackScriptRam} | Weaken: ${weakenScriptRam} | Grow: ${growScriptRam}`
 	);
 
-	const parts = [1, 3, 13];
+	const parts = [1, 8, 20];
 	const totalParts = parts.reduce((a, b) => a + b, 0);
 	ns.tprint(`INFO: Parts: ${parts.join(" | ")} | Total: ${totalParts}`);
 
@@ -79,7 +79,7 @@ export async function main(ns: NS): Promise<void> {
 				ns.print(`ERROR: Failed to launch weaken on ${server.hostname}`);
 			}
 		}
-		
+
 		if (growthThreads !== 0) {
 			const proc = fh.runScript(
 				server.hostname,
